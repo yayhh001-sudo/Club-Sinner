@@ -92,12 +92,49 @@ $('#logout-btn').addEventListener('click', async () => {
   try { await api('logout', {method:'POST', body:{}}); setAdmin(false); toast('로그아웃했습니다.'); }
   catch (e) { toast(e.message); }
 });
+
 $('#host-form').addEventListener('submit', async e => {
- e.preventDefault(); const form = e.currentTarget; const body = Object.fromEntries(new FormData(form).entries());
-  for (const k of ['age','height']) body[k] = body[k] ? Number(body[k]) : null;
-try { await api('hosts', {method:'POST', body}); form.reset(); await refreshAll(); toast('호스트를 등록했습니다.'); }
-  catch (err) { toast(err.message); }
+  e.preventDefault();
+
+  const form = e.currentTarget;
+  const body = Object.fromEntries(new FormData(form).entries());
+  const file = $('#host-image-file').files[0];
+
+  for (const k of ['age', 'height']) {
+    body[k] = body[k] ? Number(body[k]) : null;
+  }
+
+  try {
+    if (file) {
+      toast('사진을 업로드하는 중입니다...');
+
+      const uploadData = new FormData();
+      uploadData.append('file', file);
+      uploadData.append('upload_preset', 'velvet_hosts');
+
+      const response = await fetch(
+        'https://api.cloudinary.com/v1_1/xvdvihhc/image/upload',
+        { method: 'POST', body: uploadData }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.secure_url) {
+        throw new Error(result.error?.message || '사진 업로드 실패');
+      }
+
+      body.image_url = result.secure_url;
+    }
+
+    await api('hosts', { method: 'POST', body });
+    form.reset();
+    await refreshAll();
+    toast('호스트를 등록했습니다.');
+  } catch (err) {
+    toast(err.message);
+  }
 });
+
 $('#post-form').addEventListener('submit', async e => {
   e.preventDefault(); const fd = new FormData(e.currentTarget);
   const body = {title:fd.get('title'), body:fd.get('body'), pinned:fd.get('pinned') === 'on'};
