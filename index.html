@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12090d">
+  <title>VELVET — Members Club</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">V</span><span><b>VELVET</b><small>PRIVATE HOST CLUB</small></span></a>
+    <nav><a href="#hosts">HOSTS</a><a href="#ranking">RANKING</a><a href="#attendance">ATTENDANCE</a><a href="#board">LOUNGE</a></nav>
+    <button class="outline-btn" id="admin-open">ADMIN</button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">WELCOME TO THE NIGHT</p>
+        <h1>Every night has<br><em>its own story.</em></h1>
+        <p class="hero-text">당신의 밤을 조금 더 특별하게 만드는 프라이빗 라운지.<br>벨벳의 호스트와 오늘의 이야기를 만나보세요.</p>
+        <a class="gold-btn" href="#hosts">MEET OUR HOSTS <span>↗</span></a>
+      </div>
+      <div class="hero-art" aria-label="장식용 그래픽">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="monogram">V<span>·</span></div>
+        <div class="hero-caption">VELVET / EST. 2026</div>
+      </div>
+      <div class="hero-bottom"><span>VOL. 01</span><span>BLACK · BURGUNDY · GOLD</span><span>SCROLL TO DISCOVER ↓</span></div>
+    </section>
+
+    <section class="section" id="hosts">
+      <div class="section-heading"><div><p class="eyebrow">THE CAST</p><h2>Our <em>Hosts</em></h2></div><p>벨벳을 빛내는 호스트들을 소개합니다.</p></div>
+      <div id="host-grid" class="host-grid"><div class="loading">호스트 정보를 불러오는 중…</div></div>
+    </section>
+
+    <section class="section split-section" id="ranking">
+      <div class="section-heading"><div><p class="eyebrow">MONTHLY TOP</p><h2>Host <em>Ranking</em></h2></div><p>이번 달의 활동 포인트를 기준으로 집계됩니다.</p></div>
+      <div id="ranking-list" class="ranking-list"><div class="loading">랭킹을 불러오는 중…</div></div>
+    </section>
+
+    <section class="section" id="attendance">
+      <div class="section-heading"><div><p class="eyebrow">TONIGHT</p><h2>Who's <em>On Duty</em></h2></div><p>오늘의 출근 현황</p></div>
+      <div id="attendance-list" class="attendance-list"><div class="loading">출근부를 불러오는 중…</div></div>
+    </section>
+
+    <section class="section lounge" id="board">
+      <div class="section-heading"><div><p class="eyebrow">NOTICE & LOUNGE</p><h2>The <em>Lounge</em></h2></div><p>공지사항과 방문객의 메시지</p></div>
+      <div class="lounge-grid">
+        <div><h3 class="subheading">NOTICE <span>공지사항</span></h3><div id="post-list" class="post-list"><div class="loading">게시글을 불러오는 중…</div></div></div>
+        <div><h3 class="subheading">GUEST BOOK <span>방명록</span></h3>
+          <form id="guestbook-form" class="guest-form">
+            <label>닉네임<input name="nickname" maxlength="30" required placeholder="닉네임"></label>
+            <label>메시지<textarea name="message" maxlength="500" required placeholder="벨벳에 남길 메시지" rows="3"></textarea></label>
+            <button class="gold-btn" type="submit">MESSAGE LEAVE ↗</button>
+          </form>
+          <div id="guestbook-list" class="guestbook-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer><a class="brand footer-brand" href="#"><span class="brand-mark">V</span><span><b>VELVET</b><small>PRIVATE HOST CLUB</small></span></a><p>Fictional world / Community project</p><span>© 2026 VELVET</span></footer>
+  </main>
+
+  <dialog id="admin-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">CONTROL ROOM</p><h2>Admin <em>Access</em></h2></div><button class="close-btn" id="admin-close" aria-label="닫기">×</button></div>
+    <div id="login-view">
+      <p class="muted">관리자 비밀번호로 로그인하세요.</p>
+      <form id="login-form" class="stack-form"><label>관리자 비밀번호<input type="password" name="password" required autocomplete="current-password"></label><button class="gold-btn" type="submit">LOGIN ↗</button></form>
+      <p id="login-error" class="error"></p>
+    </div>
+    <div id="admin-view" hidden>
+      <div class="admin-tabs"><button data-tab="host" class="active">호스트 등록</button><button data-tab="post">공지 작성</button><button data-tab="attendance">출근부</button><button data-tab="points">포인트</button></div>
+      <section class="admin-panel" data-panel="host">
+        <h3>호스트 등록</h3>
+        <form id="host-form" class="stack-form">
+          <label>활동명<input name="name" required maxlength="60"></label>
+          <div class="two-fields"><label>나이<input name="age" type="number" min="18" max="99" required></label><label>키 (cm)<input name="height" type="number" min="100" max="250"></label></div>
+          <label>담당 컬러<input name="color" maxlength="30" placeholder="예: Burgundy"></label>
+          <label>한 줄 소개<input name="tagline" maxlength="120" placeholder="캐릭터 소개"></label>
+          <label>프로필 이미지 URL<input name="image_url" type="url" placeholder="https://..."></label>
+          <label>상세 소개<textarea name="bio" maxlength="1000" rows="3"></textarea></label>
+          <button class="gold-btn" type="submit">ADD HOST +</button>
+        </form>
+      </section>
+      <section class="admin-panel" data-panel="post" hidden>
+        <h3>공지 작성</h3><form id="post-form" class="stack-form">
+          <label>제목<input name="title" required maxlength="160"></label><label>내용<textarea name="body" rows="5" required maxlength="5000"></textarea></label>
+          <label class="inline-check"><input type="checkbox" name="pinned"> 상단 고정</label><button class="gold-btn" type="submit">PUBLISH NOTICE ↗</button>
+        </form>
+      </section>
+      <section class="admin-panel" data-panel="attendance" hidden>
+        <h3>출근 상태 변경</h3><form id="attendance-form" class="stack-form">
+          <label>호스트<select name="host_id" id="attendance-host" required></select></label>
+          <label>상태<select name="status"><option value="on">출근</option><option value="off">퇴근</option><option value="休">휴무</option></select></label>
+          <label>메모<input name="note" maxlength="120" placeholder="선택 사항"></label><button class="gold-btn" type="submit">UPDATE ATTENDANCE ↗</button>
+        </form>
+      </section>
+      <section class="admin-panel" data-panel="points" hidden>
+        <h3>활동 포인트 지급</h3><form id="points-form" class="stack-form">
+          <label>호스트<select name="host_id" id="points-host" required></select></label>
+          <label>포인트<input name="points" type="number" min="-1000" max="1000" required></label>
+          <label>사유<input name="reason" maxlength="200" required placeholder="예: 이벤트 참여"></label><button class="gold-btn" type="submit">ADD POINTS +</button>
+        </form>
+      </section>
+      <div class="admin-bottom"><span id="admin-status" class="muted"></span><button id="logout-btn" class="outline-btn">LOG OUT</button></div>
+    </div>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
