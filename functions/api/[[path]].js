@@ -75,6 +75,40 @@ export async function onRequest({request, env}) {
         .bind(name,age,height,text(b.color,30),text(b.tagline,120),validUrl(b.image_url),text(b.bio,1000)).run();
       return json({ok:true,id:result.meta.last_row_id},201);
     }
+    if (/^hosts\/\d+$/.test(route) && ["PUT","DELETE"].includes(method)) {
+      if (!await adminOnly(request, env)) return fail("관리자 로그인이 필요합니다.",401);
+      const id = Number(route.split("/")[1]);
+      const existing = await env.DB.prepare("SELECT id FROM hosts WHERE id=? AND active=1").bind(id).first();
+      if (!existing) return fail("호스트를 찾을 수 없습니다.",404);
+      if (method === "DELETE") {
+        await env.DB.prepare("UPDATE hosts SET active=0 WHERE id=?").bind(id).run();
+        return json({ok:true});
+      }
+      const b=await body(request); if (!b) return fail("요청 내용을 확인해 주세요.");
+      const name=text(b.name,60); if (!name) return fail("활동명을 입력해 주세요.");
+      const age=b.age==null||b.age===""?null:num(b.age,18,99);
+      const height=b.height==null||b.height===""?null:num(b.height,100,250);
+      if (b.age!=null&&b.age!==""&&age===null) return fail("나이는 18~99 사이여야 합니다.");
+      if (b.height!=null&&b.height!==""&&height===null) return fail("키는 100~250 사이여야 합니다.");
+      await env.DB.prepare("UPDATE hosts SET name=?,age=?,height=?,color=?,tagline=?,image_url=?,bio=? WHERE id=?")
+        .bind(name,age,height,text(b.color,30),text(b.tagline,120),validUrl(b.image_url),text(b.bio,1000),id).run();
+      return json({ok:true});
+    }
+    if (/^posts\/\d+$/.test(route) && ["PUT","DELETE"].includes(method)) {
+      if (!await adminOnly(request, env)) return fail("관리자 로그인이 필요합니다.",401);
+      const id=Number(route.split("/")[1]);
+      const existing=await env.DB.prepare("SELECT id FROM posts WHERE id=?").bind(id).first();
+      if (!existing) return fail("공지사항을 찾을 수 없습니다.",404);
+      if (method==="DELETE") {
+        await env.DB.prepare("DELETE FROM comments WHERE post_id=?").bind(id).run();
+        await env.DB.prepare("DELETE FROM posts WHERE id=?").bind(id).run();
+        return json({ok:true});
+      }
+      const b=await body(request), title=text(b?.title,160), content=text(b?.body,5000);
+      if (!title||!content) return fail("제목과 내용을 입력해 주세요.");
+      await env.DB.prepare("UPDATE posts SET title=?,body=?,pinned=? WHERE id=?").bind(title,content,b.pinned?1:0,id).run();
+      return json({ok:true});
+    }
     if (route === "ranking" && method === "GET") {
       const {results} = await env.DB.prepare(`SELECT h.id,h.name,h.color,COALESCE(SUM(CASE WHEN p.created_at >= date('now','start of month') THEN p.points ELSE 0 END),0) AS points
         FROM hosts h LEFT JOIN point_logs p ON p.host_id=h.id WHERE h.active=1 GROUP BY h.id ORDER BY points DESC,h.name COLLATE NOCASE ASC LIMIT 100`).all();
