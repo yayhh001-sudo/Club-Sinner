@@ -1,6 +1,6 @@
 name = "velvet-hostclub"
 pages_build_output_dir = "."
-compatibility_date = "2026-10-30"
+compatibility_date = "2026-10-01"
 
 [[d1_databases]]
 binding = "DB"
