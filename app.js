@@ -93,9 +93,9 @@ $('#logout-btn').addEventListener('click', async () => {
   catch (e) { toast(e.message); }
 });
 $('#host-form').addEventListener('submit', async e => {
-  e.preventDefault(); const body = Object.fromEntries(new FormData(e.currentTarget).entries());
+ e.preventDefault(); const form = e.currentTarget; const body = Object.fromEntries(new FormData(form).entries());
   for (const k of ['age','height']) body[k] = body[k] ? Number(body[k]) : null;
-  try { await api('hosts', {method:'POST', body}); e.currentTarget.reset(); await refreshAll(); toast('호스트를 등록했습니다.'); }
+try { await api('hosts', {method:'POST', body}); form.reset(); await refreshAll(); toast('호스트를 등록했습니다.'); }
   catch (err) { toast(err.message); }
 });
 $('#post-form').addEventListener('submit', async e => {
