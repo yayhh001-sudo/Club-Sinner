@@ -34,3 +34,6 @@ body:not([data-page="home"]) main>.section{min-height:70vh;padding-top:85px}
 @media(max-width:420px){.topbar nav{gap:10px}.topbar nav a{font-size:8px}.brand-word{font-size:11px}.hero-logo{width:100%}}
 
 .manage-list{display:grid;gap:8px;margin:15px 0 25px}.manage-item{border:1px solid var(--line);padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}.manage-item small{display:block;color:var(--muted);margin-top:5px}.action-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.danger-btn{background:#44111e;color:#ffcbd1;border:1px solid #9b3045;padding:9px 12px}.danger-btn:hover{background:#792139}#edit-host-panel,#edit-post-panel{border-top:1px solid var(--line);margin-top:25px;padding-top:20px}#edit-host-panel h3,#edit-post-panel h3{font-size:21px}@media(max-width:520px){.manage-item{align-items:flex-start;flex-direction:column}.manage-item .action-row{width:100%}}
+
+/* Discourage saving images through standard browser gestures. */
+img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }

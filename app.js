@@ -180,9 +180,9 @@ $('#edit-post-form').addEventListener('submit',async e=>{
  try{await api(`posts/${id}`,{method:'PUT',body:{title:fd.get('title'),body:fd.get('body'),pinned:fd.get('pinned')==='on'}});$('#edit-post-panel').hidden=true;await loadAdminPosts();toast('공지사항을 수정했습니다.');}catch(err){toast(err.message);}
 });
 $('#post-form').addEventListener('submit', async e => {
-  e.preventDefault(); const fd = new FormData(e.currentTarget);
+  e.preventDefault(); const form = e.currentTarget; const fd = new FormData(form);
   const body = {title:fd.get('title'), body:fd.get('body'), pinned:fd.get('pinned') === 'on'};
-  try { await api('posts', {method:'POST', body}); e.currentTarget.reset(); await loadPosts(); await loadAdminPosts(); toast('공지사항을 등록했습니다.'); }
+  try { await api('posts', {method:'POST', body}); form.reset(); await loadPosts(); await loadAdminPosts(); toast('공지사항을 등록했습니다.'); }
   catch (err) { toast(err.message); }
 });
 $('#attendance-form').addEventListener('submit', async e => {
@@ -191,16 +191,16 @@ $('#attendance-form').addEventListener('submit', async e => {
   catch (err) { toast(err.message); }
 });
 $('#points-form').addEventListener('submit', async e => {
-  e.preventDefault(); const body = Object.fromEntries(new FormData(e.currentTarget).entries()); body.points = Number(body.points);
-  try { await api('points', {method:'POST', body}); e.currentTarget.reset(); await loadRanking(); toast('포인트를 반영했습니다.'); }
+  e.preventDefault(); const form = e.currentTarget; const body = Object.fromEntries(new FormData(form).entries()); body.points = Number(body.points);
+  try { await api('points', {method:'POST', body}); form.reset(); await loadRanking(); toast('포인트를 반영했습니다.'); }
   catch (err) { toast(err.message); }
 });
 
 }
 if (document.body.dataset.page === 'lounge') {
 $('#guestbook-form').addEventListener('submit', async e => {
-  e.preventDefault(); const body = Object.fromEntries(new FormData(e.currentTarget).entries());
-  try { await api('guestbook', {method:'POST', body}); e.currentTarget.reset(); await loadGuestbook(); toast('방명록을 남겼습니다.'); }
+  e.preventDefault(); const form = e.currentTarget; const body = Object.fromEntries(new FormData(form).entries());
+  try { await api('guestbook', {method:'POST', body}); form.reset(); await loadGuestbook(); toast('방명록을 남겼습니다.'); }
   catch (err) { toast(err.message); }
 });
 $('#post-list').addEventListener('submit', async e => {
@@ -221,3 +221,11 @@ const pageLoaders = {
   admin: [loadHosts]
 };
 Promise.all((pageLoaders[currentPage] || []).map(fn => fn())).catch(e => toast(e.message));
+
+// Public image interaction deterrents (not DRM or a download guarantee).
+document.addEventListener('contextmenu', (event) => {
+  if (event.target.closest('img')) event.preventDefault();
+});
+document.addEventListener('dragstart', (event) => {
+  if (event.target.closest('img')) event.preventDefault();
+});
