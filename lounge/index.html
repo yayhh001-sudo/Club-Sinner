@@ -1,0 +1,14 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10080b"><title>Lounge | CLUB SINNER</title><link rel="stylesheet" href="/styles.css"></head><body data-page="lounge"><header class="topbar"><a class="brand" href="/" aria-label="CLUB SINNER 홈"><img class="brand-logo" src="/sinner-logo.jpg" alt="Sinner 로고"><span class="brand-word">CLUB SINNER<small>PRIVATE HOST CLUB</small></span></a><nav aria-label="메인 메뉴"><a href="/">HOME</a><a href="/hosts/">HOSTS</a><a href="/ranking/">RANKING</a><a href="/attendance/">ATTENDANCE</a><a href="/lounge/" class="active" aria-current="page">LOUNGE</a><a href="/admin/">ADMIN</a></nav></header><main><section class="section lounge" id="board">
+      <div class="section-heading"><div><p class="eyebrow">NOTICE & LOUNGE</p><h2>The <em>Lounge</em></h2></div><p>공지사항과 방문객의 메시지</p></div>
+      <div class="lounge-grid">
+        <div><h3 class="subheading">NOTICE <span>공지사항</span></h3><div id="post-list" class="post-list"><div class="loading">게시글을 불러오는 중…</div></div></div>
+        <div><h3 class="subheading">GUEST BOOK <span>방명록</span></h3>
+          <form id="guestbook-form" class="guest-form">
+            <label>닉네임<input name="nickname" maxlength="30" required placeholder="닉네임"></label>
+            <label>메시지<textarea name="message" maxlength="500" required placeholder="CLUB SINNER에 남길 메시지" rows="3"></textarea></label>
+            <button class="gold-btn" type="submit">MESSAGE LEAVE ↗</button>
+          </form>
+          <div id="guestbook-list" class="guestbook-list"></div>
+        </div>
+      </div>
+</section><footer><a class="brand footer-brand" href="/"><img class="brand-logo" src="/sinner-logo.jpg" alt="Sinner 로고"><span class="brand-word">CLUB SINNER</span></a><p>Fictional world / Community project</p><span>© 2026 CLUB SINNER</span></footer></main><div id="toast" role="status" aria-live="polite"></div><script src="/app.js" defer></script></body></html>
