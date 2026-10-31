@@ -114,6 +114,59 @@ export async function onRequest({request, env}) {
         FROM hosts h LEFT JOIN point_logs p ON p.host_id=h.id WHERE h.active=1 GROUP BY h.id ORDER BY points DESC,h.name COLLATE NOCASE ASC LIMIT 100`).all();
       return json({ranking:results});
     }
+    // Host attendance authentication (separate from the existing admin login).
+    if (route === "host-attendance/account" && method === "POST") {
+      if (!await adminOnly(request, env)) return fail("관리자 로그인이 필요합니다.",401);
+      const b=await body(request), hostId=num(b?.host_id,1,2147483647), password=text(b?.password,128);
+      if (!hostId || password.length<8) return fail("호스트를 선택하고 8자 이상 비밀번호를 입력하세요.");
+      const host=await env.DB.prepare("SELECT id FROM hosts WHERE id=? AND active=1").bind(hostId).first();
+      if (!host) return fail("호스트가 없습니다.",404);
+      const salt=crypto.randomUUID();
+      const hash=await hmac(salt,password);
+      await env.DB.prepare("INSERT INTO host_attendance_accounts(host_id,salt,password_hash) VALUES(?,?,?) ON CONFLICT(host_id) DO UPDATE SET salt=excluded.salt,password_hash=excluded.password_hash").bind(hostId,salt,hash).run();
+      return json({ok:true});
+    }
+    if (route === "host-attendance/login" && method === "POST") {
+      const b=await body(request), hostId=num(b?.host_id,1,2147483647), password=text(b?.password,128);
+      if (!hostId || !password) return fail("호스트와 비밀번호를 입력하세요.");
+      const account=await env.DB.prepare("SELECT a.salt,a.password_hash FROM host_attendance_accounts a JOIN hosts h ON h.id=a.host_id WHERE a.host_id=? AND h.active=1").bind(hostId).first();
+      if (!account || await hmac(account.salt,password)!==account.password_hash) return fail("로그인 정보가 올바르지 않습니다.",401);
+      if (!env.ADMIN_SESSION_SECRET) return fail("서버 인증 설정이 필요합니다.",500);
+      const payload=`${hostId}:${Date.now()+8*60*60*1000}`;
+      const token=`${payload}.${await hmac(env.ADMIN_SESSION_SECRET,`host:${payload}`)}`;
+      return json({ok:true},200,{"set-cookie":`sinner_host=${encodeURIComponent(token)}; Path=/api/host-attendance; HttpOnly; Secure; SameSite=Strict; Max-Age=28800`});
+    }
+    if (route === "host-attendance/logout" && method === "POST") return json({ok:true},200,{"set-cookie":"sinner_host=; Path=/api/host-attendance; HttpOnly; Secure; SameSite=Strict; Max-Age=0"});
+    if (route.startsWith("host-attendance/") && ["me","clock","history"].includes(route.split("/")[1])) {
+      const raw=(request.headers.get("cookie")||"").split(";").map(v=>v.trim()).find(v=>v.startsWith("sinner_host="));
+      const token=raw?decodeURIComponent(raw.slice(12)):"";
+      const match=/^(\d+):(\d+)\.([\w-]+)$/.exec(token);
+      if (!match || Number(match[2])<Date.now() || !env.ADMIN_SESSION_SECRET || await hmac(env.ADMIN_SESSION_SECRET,`host:${match[1]}:${match[2]}`)!==match[3]) return fail("호스트 로그인이 필요합니다.",401);
+      const hostId=Number(match[1]);
+      const host=await env.DB.prepare("SELECT id,name FROM hosts WHERE id=? AND active=1").bind(hostId).first();
+      if (!host) return fail("호스트 계정이 비활성화되었습니다.",403);
+      if (route==="host-attendance/clock" && method==="POST") {
+        const b=await body(request), status=b?.status;
+        if (!["on","off"].includes(status)) return fail("출근 또는 퇴근을 선택하세요.");
+        const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+        const old=await env.DB.prepare("SELECT status FROM attendance WHERE host_id=? AND work_date=?").bind(hostId,today).first();
+        if (old?.status===status) return fail("이미 같은 상태로 기록되어 있습니다.",409);
+        if (status==='off' && old?.status!=='on') return fail("먼저 출근을 기록해 주세요.",409);
+        await env.DB.prepare("INSERT INTO attendance(host_id,work_date,status,note) VALUES(?,?,?,'') ON CONFLICT(host_id,work_date) DO UPDATE SET status=excluded.status,updated_at=CURRENT_TIMESTAMP").bind(hostId,today,status).run();
+        await env.DB.prepare("INSERT INTO host_attendance_events(host_id,status) VALUES(?,?)").bind(hostId,status).run();
+        return json({ok:true});
+      }
+      if (route==="host-attendance/history" && method==="GET") {
+        const {results}=await env.DB.prepare("SELECT status,datetime(created_at,'+9 hours') AS time_kst FROM host_attendance_events WHERE host_id=? ORDER BY id DESC LIMIT 60").bind(hostId).all();
+        return json({history:results});
+      }
+      if (route==="host-attendance/me" && method==="GET") return json({host});
+    }
+    if (route==="host-attendance/admin-history" && method==="GET") {
+      if (!await adminOnly(request,env)) return fail("관리자 로그인이 필요합니다.",401);
+      const {results}=await env.DB.prepare("SELECT h.name,e.status,datetime(e.created_at,'+9 hours') AS time_kst FROM host_attendance_events e JOIN hosts h ON h.id=e.host_id ORDER BY e.id DESC LIMIT 100").all();
+      return json({history:results});
+    }
     if (route === "attendance" && method === "GET") {
       const {results} = await env.DB.prepare(`SELECT h.id,h.name,a.status,a.note,a.updated_at FROM hosts h LEFT JOIN attendance a ON a.host_id=h.id AND a.work_date=date('now','localtime')
         WHERE h.active=1 ORDER BY CASE a.status WHEN 'on' THEN 0 WHEN '休' THEN 1 ELSE 2 END,h.name COLLATE NOCASE`).all();
