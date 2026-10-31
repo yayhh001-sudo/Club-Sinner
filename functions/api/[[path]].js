@@ -114,11 +114,36 @@ export async function onRequest({request, env}) {
         FROM hosts h LEFT JOIN point_logs p ON p.host_id=h.id WHERE h.active=1 GROUP BY h.id ORDER BY points DESC,h.name COLLATE NOCASE ASC LIMIT 100`).all();
       return json({ranking:results});
     }
+    // Public stamp calendar: dates only, never private timestamps.
+    if (route === "attendance/stamps" && method === "GET") {
+      const url=new URL(request.url), hostId=num(url.searchParams.get("host_id"),1,2147483647);
+      const month=url.searchParams.get("month")||"";
+      if (!hostId || !/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return fail("호스트와 조회 월을 확인하세요.");
+      const host=await env.DB.prepare("SELECT id,name FROM hosts WHERE id=? AND active=1").bind(hostId).first();
+      if (!host) return fail("호스트를 찾을 수 없습니다.",404);
+      const {results:days}=await env.DB.prepare("SELECT DISTINCT substr(datetime(created_at,'+9 hours'),1,10) AS day FROM host_attendance_events WHERE host_id=? AND status='on' AND substr(datetime(created_at,'+9 hours'),1,7)=? ORDER BY day").bind(hostId,month).all();
+      return json({host,month,days:days.map(r=>r.day)});
+    }
+    // Admin-only stamp correction.
+    if (route === "attendance/stamps/admin" && method === "POST") {
+      if (!await adminOnly(request,env)) return fail("관리자 로그인이 필요합니다.",401);
+      const b=await body(request), hostId=num(b?.host_id,1,2147483647), day=String(b?.day||""), stamped=b?.stamped;
+      if (!hostId || !/^\d{4}-\d{2}-\d{2}$/.test(day) || Number.isNaN(Date.parse(day)) || typeof stamped!=="boolean") return fail("수정 정보를 확인하세요.");
+      const host=await env.DB.prepare("SELECT id FROM hosts WHERE id=? AND active=1").bind(hostId).first();
+      if (!host) return fail("호스트가 없습니다.",404);
+      if (stamped) {
+        const exists=await env.DB.prepare("SELECT id FROM host_attendance_events WHERE host_id=? AND status='on' AND substr(datetime(created_at,'+9 hours'),1,10)=? LIMIT 1").bind(hostId,day).first();
+        if (!exists) await env.DB.prepare("INSERT INTO host_attendance_events(host_id,status,created_at) VALUES(?,'on',?)").bind(hostId,day+" 03:00:00").run();
+      } else {
+        await env.DB.prepare("DELETE FROM host_attendance_events WHERE host_id=? AND status='on' AND substr(datetime(created_at,'+9 hours'),1,10)=?").bind(hostId,day).run();
+      }
+      return json({ok:true});
+    }
     // Host attendance authentication (separate from the existing admin login).
     if (route === "host-attendance/account" && method === "POST") {
       if (!await adminOnly(request, env)) return fail("관리자 로그인이 필요합니다.",401);
       const b=await body(request), hostId=num(b?.host_id,1,2147483647), password=text(b?.password,128);
-      if (!hostId || password.length<8) return fail("호스트를 선택하고 8자 이상 비밀번호를 입력하세요.");
+      if (!hostId || !/^[0-9]{4}$/.test(password)) return fail("호스트를 선택하고 숫자 4자리 비밀번호를 입력하세요.");
       const host=await env.DB.prepare("SELECT id FROM hosts WHERE id=? AND active=1").bind(hostId).first();
       if (!host) return fail("호스트가 없습니다.",404);
       const salt=crypto.randomUUID();
